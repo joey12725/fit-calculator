@@ -140,4 +140,4 @@ All geometry is calculated with `trimesh`, the mesh is scaled using the user’s
 | Download    | direct HTTPS from returned `url`          | saved as `{user}/{pose}.obj`        |
 
 *(CORS blocked → frontend relays all calls through FastAPI to add `Access-Control-Allow-Origin`)*
-0
+1
