@@ -6,7 +6,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-white hover:bg-primary/90",
+        primary: "bg-brand text-white hover:bg-brand/90",
         secondary: "bg-secondary text-white hover:bg-secondary/90",
       },
       size: {
@@ -16,7 +16,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   }
