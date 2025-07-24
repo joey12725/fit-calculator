@@ -5,5 +5,8 @@
   "scripts": {
     "build": "python -m py_compile main.py",
     "lint": "echo 'linting python'"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
