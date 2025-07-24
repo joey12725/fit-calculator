@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.turbo/
+__pycache__/
+apps/*/node_modules/
+apps/*/.next/
+apps/*/.turbo/
+apps/*/__pycache__/
+pnpm-lock.yaml

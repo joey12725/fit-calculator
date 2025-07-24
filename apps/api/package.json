@@ -1,0 +1,9 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "python -m py_compile main.py",
+    "lint": "echo 'linting python'"
+  }
+}
