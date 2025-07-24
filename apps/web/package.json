@@ -11,6 +11,9 @@
   "engines": {
     "node": "20.x"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@react-three/drei": "^10.6.0",
     "@react-three/fiber": "^9.2.0",
