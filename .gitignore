@@ -1,9 +1,24 @@
+# dependencies
 node_modules/
+.pnpm-store/
+
+# build output
 .next/
-.turbo/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# python
 __pycache__/
-apps/*/node_modules/
-apps/*/.next/
-apps/*/.turbo/
-apps/*/__pycache__/
-pnpm-lock.yaml
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# env and local files
+.env
+.env.*
+!.env.example
+.vercel/
+.DS_Store
+coverage/

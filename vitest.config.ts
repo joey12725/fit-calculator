@@ -1,9 +1,13 @@
+import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./apps/web', import.meta.url)) },
+  },
   test: {
-    environment: 'jsdom',
-    globals: true,
-    include: ['apps/web/__tests__/*.test.tsx'],
+    include: ['packages/*/test/**/*.test.ts', 'apps/web/test/**/*.test.tsx'],
   },
 });
