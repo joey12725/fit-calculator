@@ -1,0 +1,123 @@
+{
+  "$comment": "Fabricated measurement profiles. Every value here is invented for testing; none comes from a real person.",
+  "profiles": [
+    {
+      "name": "standing-only",
+      "input": { "unit": "in", "underbust": 30, "bustStanding": 35 },
+      "scale": "UK",
+      "expected": {
+        "label": "30DD",
+        "alternate": null,
+        "sisters": ["28E", "32D"],
+        "bustMethod": "standing",
+        "effectiveBust": 35,
+        "cupSteps": 5,
+        "shape": "unknown",
+        "dwr": null,
+        "styles": [["plunge", "unknown"], ["balconette", "unknown"], ["molded", "unknown"], ["full-cup", "unknown"]]
+      }
+    },
+    {
+      "name": "leaning-close-between-bands",
+      "input": { "unit": "in", "underbust": 31.25, "bustStanding": 37, "bustLeaning": 38.5 },
+      "scale": "UK",
+      "expected": {
+        "label": "32F",
+        "alternate": "30FF",
+        "sisters": ["30FF", "34E"],
+        "bustMethod": "leaning",
+        "effectiveBust": 38.5,
+        "cupSteps": 7,
+        "shape": "unknown",
+        "dwr": null,
+        "styles": [["plunge", "unknown"], ["balconette", "unknown"], ["molded", "unknown"], ["full-cup", "unknown"]]
+      }
+    },
+    {
+      "name": "leaning-close-us-scale",
+      "input": { "unit": "in", "underbust": 31.25, "bustStanding": 37, "bustLeaning": 38.5 },
+      "scale": "US",
+      "expected": {
+        "label": "32G",
+        "alternate": "30H",
+        "sisters": ["30H", "34DDD"],
+        "bustMethod": "leaning",
+        "effectiveBust": 38.5,
+        "cupSteps": 7,
+        "shape": "unknown",
+        "dwr": null,
+        "styles": [["plunge", "unknown"], ["balconette", "unknown"], ["molded", "unknown"], ["full-cup", "unknown"]]
+      }
+    },
+    {
+      "name": "blended-soft-tissue",
+      "input": { "unit": "in", "underbust": 34, "bustStanding": 39, "bustLeaning": 42 },
+      "scale": "UK",
+      "expected": {
+        "label": "34E",
+        "alternate": null,
+        "sisters": ["32F", "36DD"],
+        "bustMethod": "blended",
+        "effectiveBust": 39.6,
+        "cupSteps": 6,
+        "shape": "unknown",
+        "dwr": null,
+        "styles": [["plunge", "unknown"], ["balconette", "unknown"], ["molded", "unknown"], ["full-cup", "unknown"]]
+      }
+    },
+    {
+      "name": "metric-projected",
+      "input": { "unit": "cm", "underbust": 76, "bustStanding": 92, "bustLeaning": 94, "depth": 11, "width": 9 },
+      "scale": "UK",
+      "expected": {
+        "label": "30FF",
+        "alternate": null,
+        "sisters": ["28G", "32F"],
+        "bustMethod": "leaning",
+        "effectiveBust": 37.01,
+        "cupSteps": 8,
+        "shape": "projected",
+        "dwr": 1.22,
+        "styles": [["full-cup", "good"], ["molded", "spill-risk"], ["balconette", "spill-risk"], ["plunge", "spill-risk"]]
+      }
+    },
+    {
+      "name": "shallow-wide-set",
+      "input": { "unit": "in", "underbust": 36.6, "bustStanding": 41, "depth": 3.2, "width": 4.4 },
+      "scale": "UK",
+      "expected": {
+        "label": "36C",
+        "alternate": "38B",
+        "sisters": ["34D", "38B"],
+        "bustMethod": "standing",
+        "effectiveBust": 41,
+        "cupSteps": 3,
+        "shape": "shallow",
+        "dwr": 0.73,
+        "styles": [["plunge", "good"], ["balconette", "gap-risk"], ["molded", "gap-risk"], ["full-cup", "gap-risk"]]
+      }
+    },
+    {
+      "name": "balanced-us",
+      "input": { "unit": "in", "underbust": 28, "bustStanding": 33.5, "bustLeaning": 34, "depth": 4, "width": 4 },
+      "scale": "US",
+      "expected": {
+        "label": "28DDD",
+        "alternate": null,
+        "sisters": ["26G", "30DD"],
+        "bustMethod": "leaning",
+        "effectiveBust": 34,
+        "cupSteps": 6,
+        "shape": "balanced",
+        "dwr": 1,
+        "styles": [["molded", "good"], ["balconette", "good"], ["full-cup", "good"], ["plunge", "spill-risk"]]
+      }
+    }
+  ],
+  "errors": [
+    { "name": "bust-below-underbust", "input": { "unit": "in", "underbust": 34, "bustStanding": 33 }, "match": "bust must be larger" },
+    { "name": "depth-without-width", "input": { "unit": "in", "underbust": 30, "bustStanding": 35, "depth": 4 }, "match": "used together" },
+    { "name": "negative-value", "input": { "unit": "in", "underbust": -30, "bustStanding": 35 }, "match": "positive number" },
+    { "name": "out-of-range", "input": { "unit": "cm", "underbust": 30, "bustStanding": 40 }, "match": "supported range" }
+  ]
+}
