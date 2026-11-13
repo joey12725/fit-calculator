@@ -1,143 +1,99 @@
-# Meshcapade Bra‑Fit App
+# Fit Calculator
 
-**Lightning‑fast, 3‑D bra‑size calculator powered by Meshcapade avatars**
-Mobile‑first • Next.js + Tailwind CSS • Python FastAPI • three.js point‑cloud viewer
+**A bra-fit recommendation engine that shows its work.** Enter a snug underbust, a standing and a leaning bust measurement, and optionally a shape profile. The engine returns a band and cup, an alternate band when you sit between sizes, sister sizes, a shape read, and which cuts are likely to fit. Every rule it applies is printed alongside the answer.
 
----
+![Fit Calculator showing a 30FF recommendation for a fabricated metric profile](docs/screenshot.png)
 
-## ✨ Features
+The same engine ships twice: as a pure TypeScript package that runs in the browser, and as a Python module behind a FastAPI endpoint. Both are tested against one shared set of golden fixtures, so they can't quietly drift apart.
 
-|  Module                     |  What it does                                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Two‑scan wizard**         | Captures *standing* + *lean‑forward* photo sets to reveal hidden breast geometry.                |
-| **Meshcapade bridge**       | Creates avatars from images (100 credits each), polls build, exports OBJ.                        |
-| **Geometry engine**         | Slices SMPL‑X mesh → under‑bust, bust, depth‑to‑width, volume (≤ 3 % error).                     |
-| **ABTF‑plus sizing**        | Combines standing/leaning metrics, DWR & volume to predict band & cup; flags gapping / spillage. |
-| **Pink point‑cloud viewer** | three.js scene with toggle between the two scans.                                                |
-| **Mailchimp sync**          | Upserts contact and saves calculated size in custom field `BRA_SIZE`.                            |
-| **Admin KPIs**              | Job‑success dashboard, average processing time, credit balance.                                  |
+## Features
 
-Primary accent `#2c9f82`  |  Secondary accent `#de1465`
+- **Measurements to size in one pass.** Band from snug underbust, cup from the bust-to-underbust difference, UK or US cup letters.
+- **Standing + leaning bust.** Leaning forward captures tissue a standing measurement misses. Close readings use the leaning value; far-apart readings get blended.
+- **Shape-aware.** Optional apex depth and root width give a depth-to-width ratio that classifies shape as shallow, balanced or projected and nudges the cup to match.
+- **Style outlook.** Plunge, balconette, molded and seamed full-cup cuts are each patterned for a different depth-to-width ratio. The engine flags likely gapping or spilling for each one and ranks them.
+- **Between-band help.** Underbusts near an odd number get a second option on the other band, with the cup adjusted to keep volume.
+- **Sister sizes.** One band down and one cup up, or one band up and one cup down.
+- **Explainable.** Each recommendation carries a step-by-step trace, which the UI renders as "How it got there".
+- **Metric or imperial.** Toggle units and the inputs convert in place.
+- **Two runtimes, one spec.** TypeScript in the browser, Python on the server, both held to `fixtures/profiles.json`.
 
----
+## Quickstart
 
-## 🗂 Repo layout
+Requires Node 20.9+ with [pnpm](https://pnpm.io) (or `corepack enable`), and Python 3.11+ for the API.
+
+```bash
+git clone https://github.com/joey12725/fit-calculator.git
+cd fit-calculator
+pnpm install
+pnpm dev            # web app on http://localhost:3000
+```
+
+Run the checks:
+
+```bash
+pnpm test           # engine + UI tests (Vitest)
+pnpm lint && pnpm typecheck
+pnpm build          # production build of the web app
+```
+
+Start the API (optional):
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r apps/api/requirements.txt
+pytest                                  # engine parity + endpoint tests
+uvicorn apps.api.main:app --reload      # http://localhost:8000/docs
+```
+
+```bash
+curl -s localhost:8000/fit/recommend \
+  -H 'content-type: application/json' \
+  -d '{"unit":"in","scale":"UK","underbust":31.25,"bustStanding":37,"bustLeaning":38.5}'
+# → {"size":{"band":32,"cup":"F","label":"32F"},"alternate":{"band":30,"cup":"FF","label":"30FF"}, ...}
+```
+
+## How the fit model works
+
+All math runs in inches. Centimetre input is divided by 2.54 first.
+
+| Step | Rule |
+| --- | --- |
+| Band | Snug underbust rounded to the nearest even number (half up). |
+| Working bust | Standing only: use it. Leaning within 2 in of standing: use leaning. Further apart: `(standing + leaning + 0.9 × leaning) / 3`. |
+| Cup | `round(working bust − underbust)` cup steps: 1 = A, 2 = B, 3 = C and so on through the UK or US letter sequence. |
+| Shape | Depth ÷ width above 1.1 is projected (+1 cup). Below 0.9 is shallow (−1 cup). Otherwise balanced. |
+| Alternate band | Underbust within 0.5 in of an odd number also gets the neighbouring band with the cup shifted one step. |
+| Sister sizes | Band −2 / cup +1 and band +2 / cup −1. |
+| Style outlook | Your depth ÷ width over each cut's patterned ratio. Above 1.15 may spill, below 0.85 may gap, otherwise a good match. |
+
+For example, the fabricated profile on the screenshot (underbust 76 cm, standing 92 cm, leaning 94 cm, depth 11 cm, width 9 cm) works out like this:
+
+1. 76 cm is 29.92 in, so the band is **30**.
+2. Standing and leaning are 0.79 in apart, so the working bust is the leaning 37.01 in.
+3. 37.01 − 29.92 = 7.09 → **7** cup steps.
+4. Depth ÷ width = 1.22, which is projected, so one more step: **8** (UK FF).
+5. Result: **30FF**, sisters 28G and 32F. A seamed full cup is the closest style match.
+
+[docs/fit-model.md](docs/fit-model.md) goes deeper, including the cup tables and how to tune thresholds.
+
+## Architecture
 
 ```
 .
-├─ apps/
-│  ├─ web/            # Next.js (TypeScript) UI
-│  └─ api/            # FastAPI micro‑backend
-├─ packages/
-│  └─ ui/             # shadcn/ui components
-├─ turbo.json         # Turborepo tasks
-└─ README.md
+├─ packages/engine/      # @fit-calculator/engine: pure TS fit engine + Vitest suite
+├─ apps/web/             # Next.js 16 (App Router) + Tailwind CSS 4 calculator UI
+├─ apps/api/             # FastAPI service + Python port of the engine (pytest)
+├─ fixtures/profiles.json  # golden fabricated profiles both engines must satisfy
+└─ docs/                 # fit model and architecture notes
 ```
 
----
+The web app imports the engine directly and computes in the browser, so the calculator needs no backend and deploys as a plain Next.js site. The FastAPI service exposes the same logic at `POST /fit/recommend` for server-side callers such as a storefront, a CRM sync or a batch job. See [docs/architecture.md](docs/architecture.md).
 
-## 🔧 Quick start
+## Tech stack
 
-```bash
-# clone and bootstrap
-git clone https://github.com/your-org/bra-fit-app.git && cd bra-fit-app
-corepack enable && corepack prepare pnpm@latest --activate
-pnpm install        # installs both front‑ and back‑end deps
-```
+TypeScript · React 19 · Next.js 16 · Tailwind CSS 4 · Vitest + Testing Library · Python · FastAPI · Pydantic · pytest · Ruff · pnpm workspaces · GitHub Actions
 
-### 1. Environment variables
+## License
 
-Create `.env` in **apps/api**:
-
-```dotenv
-# Meshcapade
-MESHA_CLIENT_ID=...
-MESHA_CLIENT_SECRET=...
-
-# Mailchimp
-MC_API_KEY=usX-xxxxxxxxxxxxxxxxxxxxxx
-MC_LIST_ID=xxxxxxxxxx
-
-# Storage (local MinIO or AWS S3)
-S3_ENDPOINT=http://localhost:9000
-S3_ACCESS_KEY=...
-S3_SECRET_KEY=...
-S3_BUCKET=meshes
-```
-
-> **Tip:** During local smoke‑tests you can bypass S3 entirely; the uploader downloads the OBJ straight from Meshcapade.
-
-### 2. Run dev servers
-
-```bash
-# backend (FastAPI + reload)
-pnpm --filter api dev      # http://localhost:8000
-
-# frontend (Next.js)
-pnpm --filter web dev      # http://localhost:3000
-```
-
-Open [http://localhost:3000/start](http://localhost:3000/start) on your phone, paste an access token, follow the wizard, and watch the result render as a pink point cloud.
-
----
-
-## 📐 Sizing math overview
-
-```text
-1. Capture UB_tight (standing mesh) and B_standing.
-2. Capture B_leaning + volume + depth/width (lean mesh).
-3. Band = round_even(UB_tight_inches)
-4. Bust = if |B_lea‑B_sta| ≤ 2 in → B_lea else avg(B_sta, B_lea, 0.9·B_lea)
-5. CupDiff = Bust – UB_tight  →  1 in = A, 2 in = B ...
-6. Shape adjust:
-      if DWR > 1.1  ↑1 cup
-      if DWR < 0.9  ↓1 cup
-7. Volume adjust against bra‑model table (±15 % threshold)
-8. Flags: side‑spillage (depth > pattern*1.15), gap (volume < 0.85*pattern)
-```
-
-All geometry is calculated with `trimesh`, the mesh is scaled using the user’s supplied height.
-
----
-
-## 🖼 UI snapshots
-
-| Start page                 | Scan wizard              | Result                       |
-| -------------------------- | ------------------------ | ---------------------------- |
-| ![start](./docs/start.png) | ![scan](./docs/scan.png) | ![result](./docs/result.png) |
-
----
-
-## 🛠 Scripts & tasks
-
-|  Command           |  Runs                     |  Purpose             |
-| ------------------ | ------------------------- | -------------------- |
-| `pnpm turbo build` | Next.js & FastAPI compile | CI build gate        |
-| `pnpm web:lint`    | ESLint + Prettier         | style check          |
-| `pnpm api:test`    | Pytest + pytest‑asyncio   | backend unit tests   |
-| `pnpm e2e`         | Playwright headless       | full happy‑path scan |
-
----
-
-## 🚀 Deploy
-
-* **Frontend:** push `main` → Vercel; environment variables set in Project → Environment.
-* **Backend:** Fly.io (`fly launch`) or any Docker host; image built from `Dockerfile` in apps/api.
-* **MinIO/S3:** optional; set `S3_ENDPOINT` to point at provider.
-
----
-
-## 📜 Meshcapade API endpoints used
-
-| Step        | Method & URL                              | Notes                               |
-| ----------- | ----------------------------------------- | ----------------------------------- |
-| Auth        | `POST /oauth/token`                       | client‑id/secret → access\_token    |
-| Placeholder | `POST /api/v1/avatars/create/from-images` | returns `avatarId`                  |
-| Upload      | `POST /avatars/{id}/images` ≥ 1×          | presigned PUT URLs                  |
-| Fit         | `POST /avatars/{id}/fit-to-images`        | `imageMode: AFI`, costs 100 credits |
-| Poll        | `GET /avatars/{id}`                       | wait until `state=READY`            |
-| Export      | `POST /avatars/{id}/export`               | `{format:\"obj\", pose:\"t\"}`      |
-| Download    | direct HTTPS from returned `url`          | saved as `{user}/{pose}.obj`        |
-
-*(CORS blocked → frontend relays all calls through FastAPI to add `Access-Control-Allow-Origin`)*
-1
+MIT. Built by [Joey Hersh](https://github.com/joey12725).
