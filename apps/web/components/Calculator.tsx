@@ -264,7 +264,7 @@ function Result({ rec, unit }: { rec: Recommendation; unit: Unit }) {
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl bg-canvas px-4 py-3">
             <dt className="text-xs text-muted">{s.label}</dt>
-            <dd className="mt-1 text-lg font-semibold capitalize tabular-nums">{s.value}</dd>
+            <dd className="mt-1 text-lg font-semibold tabular-nums first-letter:uppercase">{s.value}</dd>
             {s.sub && <dd className="text-xs text-muted">{s.sub}</dd>}
           </div>
         ))}
