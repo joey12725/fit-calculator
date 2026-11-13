@@ -50,7 +50,7 @@ uvicorn apps.api.main:app --reload      # http://localhost:8000/docs
 curl -s localhost:8000/fit/recommend \
   -H 'content-type: application/json' \
   -d '{"unit":"in","scale":"UK","underbust":31.25,"bustStanding":37,"bustLeaning":38.5}'
-# → {"size":{"band":32,"cup":"F","label":"32F"},"alternate":{"band":30,"cup":"FF","label":"30FF"}, ...}
+# → {"scale":"UK","size":{"band":32,"cup":"F","label":"32F"},"alternate":{"band":30,"cup":"FF","label":"30FF"}, ...}
 ```
 
 ## How the fit model works
